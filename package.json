@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "concurrently \"node app.js\" \"serve build\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.0",
     "parser": "^0.1.4",
     "pg": "^8.10.0",
+    "serve": "^14.2.1",
     "ws": "^8.13.0"
   },
   "devDependencies": {
