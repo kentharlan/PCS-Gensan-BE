@@ -5,7 +5,7 @@
 -- Dumped from database version 16.2 (Debian 16.2-1.pgdg120+2)
 -- Dumped by pg_dump version 16.1
 
--- Started on 2024-03-23 22:33:20 PST
+-- Started on 2024-03-23 23:18:03 PST
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -382,6 +382,8 @@ COPY public.rooms (room_no, type, transaction_no, status) FROM stdin;
 --
 
 COPY public.sessions (session_id, user_id, login_dt, logout_dt) FROM stdin;
+1	1	2024-03-23 23:17:26.182628+08	2024-03-23 23:17:29.190718+08
+2	2	2024-03-23 23:17:31.847403+08	\N
 \.
 
 
@@ -402,8 +404,8 @@ COPY public.transactions (transaction_no, room_no, dt_check_in, dt_check_out, bi
 --
 
 COPY public.users (id, first_name, last_name, username, password, admin, dt_created, dt_updated) FROM stdin;
-1	admin	admin	admin	$2a$10$2w8KHROkTkN1FcLU.RQwOu4.BAcElMnxmr16/w6zRJUKCaKEMy8yi	t	2024-03-09 06:42:33.208784	2024-03-09 06:42:33.208784
-2	user	user	user	$2a$10$4R8MC4YtqEtKs5H8XQ9rBOCMGo1xSsGpoXu0AuCXpyh2qE1Ekhaqe	f	2024-03-11 19:43:40.874988	2024-03-11 19:43:40.874988
+1	admin	admin	admin	1234	t	2024-03-09 06:42:33.208784	2024-03-09 06:42:33.208784
+2	user	user	user	1234	f	2024-03-11 19:43:40.874988	2024-03-11 19:43:40.874988
 \.
 
 
@@ -431,7 +433,7 @@ SELECT pg_catalog.setval('public.rates_rate_id_seq', 4, false);
 -- Name: sessions_session_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.sessions_session_id_seq', 1, false);
+SELECT pg_catalog.setval('public.sessions_session_id_seq', 2, true);
 
 
 --
@@ -542,7 +544,7 @@ ALTER TABLE ONLY public.sessions
     ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
--- Completed on 2024-03-23 22:33:20 PST
+-- Completed on 2024-03-23 23:18:03 PST
 
 --
 -- PostgreSQL database dump complete

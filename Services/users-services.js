@@ -53,7 +53,7 @@ const createUser = async ({data}) => {
             first_name,
             last_name,
             username,
-            hashedPass,
+            password,
             admin
         ]);
 
@@ -111,7 +111,7 @@ const updatePassword = async ({data, id}) => {
         const hashedPass =  await bcrypt.hash(password, 10)
 
         await Pg.query(qs.updatePassword, [
-            hashedPass,
+            password,
             id
         ]);
 
