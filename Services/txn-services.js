@@ -12,7 +12,14 @@ const getTxn = async ({txn_no}) => {
     
     try {
         const txn = await Pg.query(qs.getTxnByTxnNo, [txn_no])
-        response.result = txn[0];
+        const payments = await Pg.query(qs.getPaymentsByTxnNo, [txn_no])
+
+        const transaction = txn[0]
+        const total_payment = payments.reduce((acc, payment) => acc + payment.amount, 0);
+
+        transaction.bill = transaction.bill - total_payment
+
+        response.result = transaction;
     } catch (error) {
         response.error = error.message;
     } finally {
@@ -91,6 +98,30 @@ const checkIn = async ({ data }) => {
     }
 }
 
+const pay = async ({ data }) => {
+    let response = {
+        result: null,
+        error: null
+    };
+    try {
+        const {
+            transaction_no,
+            user_id,
+            amount
+        } = data
+
+        const session = await Pg.query(qs.getActiveSession, [user_id])
+        const { session_id } = session[0];
+
+        res = await Pg.query(qs.insertPayment, [transaction_no, session_id, amount])
+        response.result = res[0]
+    } catch (error) {
+        response.error = error.message;
+    } finally {
+        return response;
+    }
+}
+
 const checkOut = async ({ data }) => {
     let response = {
         result: null,
@@ -99,10 +130,21 @@ const checkOut = async ({ data }) => {
     try {
         const {
             room_no,
+            bill,
             user_id
         } = data
 
-        await check_out(room_no, user_id);
+        if (bill && bill > 0) {
+            const room = await Pg.query(qs.getRoomByRoomNo, [room_no])
+            const transaction_no = room[0].transaction_no
+    
+            const session = await Pg.query(qs.getActiveSession, [user_id])
+            const session_id = session[0].session_id
+    
+            await Pg.query(qs.insertPayment, [transaction_no, session_id, bill])
+        }
+
+        await check_out(room_no);
 
         await timeouts.cancelTimeout(room_no)
 
@@ -155,12 +197,14 @@ const cancel = async ({ data }) => {
 
         const getUser = await Pg.query(qs.getUserById, [user_id]);
         const user = getUser[0]
-        const cashier = `${user.first_name} ${user.last_name}`;
+        const remarks = `Cancelled by ${user.first_name}`
 
         // Update Room
         await Pg.query(qs.updateRoom, [3, null, room_no])
+        // Delete Payment Record if any
+        await Pg.query(qs.deletePaymentByTxnNo, [transaction_no])
         // Update Transaction
-        await Pg.query(qs.cancelTxn, [cashier, transaction_no]);
+        await Pg.query(qs.cancelTxn, [remarks, transaction_no]);
         // Cancel Timeout
         await timeouts.cancelTimeout(room_no);
 
@@ -229,21 +273,95 @@ const active = async () => {
     }
 }
 
-const history = async () => {
+const history = async ({ filters }) => {
     let response = {
         result: null,
         error: null
     };
     try {
-        let history = await Pg.query(qs.getHistory);
+        const {
+            search,
+            start_date,
+            end_date
+        } = filters
 
-        let id = 0;
-        history = history.map((el) => {
-            id++;
-            return {...el, id}
-        })
+        let history = await Pg.query(qs.getHistory, [search, start_date, end_date]);
 
-        response.result = history;
+        let totalAmount = 0;
+        let totalRooms = 0;
+
+        history = history.map(txn => {
+            const formatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: "Asia/Manila" };
+            const formattedCheckIn = new Date(txn.dt_check_in).toLocaleString('en-US', formatOptions);
+            const formattedCheckOut = txn.dt_check_out ? new Date(txn.dt_check_out).toLocaleString('en-US', formatOptions) : null;
+
+            const parsedAmount = parseInt(txn.bill, 10);
+            if (!isNaN(parsedAmount)) {
+                totalAmount += parsedAmount;
+                totalRooms += 1;
+            }
+
+            return {
+                ...txn,
+                dt_check_in: formattedCheckIn,
+                dt_check_out: formattedCheckOut
+            };
+        });
+
+        response.result = {
+            totalAmount,
+            totalRooms,
+            records: history
+        }
+    } catch (error) {
+        response.error = error.message;
+    } finally {
+        return response;
+    }
+}
+
+const payments = async ({ filters }) => {
+    let response = {
+        result: null,
+        error: null
+    };
+    try {
+        const {
+            user_id,
+            start_date,
+            end_date
+        } = filters
+
+        const payments = await Pg.query(qs.getPayments, [user_id, start_date, end_date]);
+        const records = []
+        let totalAmount = 0;
+
+        for (const payment of payments) {
+            const parsedAmount = parseInt(payment.amount, 10);
+            if (isNaN(parsedAmount) || parsedAmount <= 0) {
+                continue
+            }
+
+            totalAmount += parsedAmount;
+
+            const formatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: "Asia/Manila" };
+            const formattedDate = new Date(payment.dt_created).toLocaleString('en-US', formatOptions);
+            payment.dt_created = formattedDate;
+
+            const formatLogOptions = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: "Asia/Manila" };
+            const formattedLogDate = new Date(payment.dt_created).toLocaleString('en-US', formatLogOptions);
+            payment.login_dt = formattedLogDate;
+
+            const cashier = await Pg.query(qs.getUserById, [payment.user_id])
+            payment.cashier = cashier[0]?.first_name
+
+            records.push(payment)
+        }
+
+        response.result = {
+            totalAmount,
+            records
+        };
     } catch (error) {
         response.error = error.message;
     } finally {
@@ -276,5 +394,7 @@ module.exports = {
     transfer,
     active,
     history,
-    init
+    init,
+    pay,
+    payments
 }

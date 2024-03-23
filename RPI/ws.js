@@ -91,7 +91,7 @@ class Ws {
             case 3: rpi = await this.init3(); break;
         }
 
-        if (rpi.readyState === WebSocket.OPEN) {
+        if (rpi && rpi.readyState === WebSocket.OPEN) {
             rpi.send(commands);
         } else {
             console.log('WebSocket not open');

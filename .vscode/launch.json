@@ -11,7 +11,8 @@
             "program": "${workspaceFolder}/app.js",
             "request": "launch",
             "restart": true,
-            "runtimeExecutable": "nodemon",
+            // Ensure Node.js is installed and "nodemon" is in your PATH. Alternatively, specify the full path to "nodemon" here.
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/nodemon",
             "skipFiles": [
                 "<node_internals>/**"
             ],

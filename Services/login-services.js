@@ -27,13 +27,15 @@ const login = async ({ data }) => {
             return response.error = { statusCode: 400, message: "Wrong Password"}
         }
 
+        await Pg.query(qs.logoutOtherSessions);
         const User = user[0]
+        await Pg.query(qs.createSession, [User.id]);
 
         const userData = {
             name: `${User.first_name} ${User.last_name}`,
         }
 
-        const token = await jwt.sign(userData, process.env.JWT)
+        const token = jwt.sign(userData, process.env.JWT)
 
         response.result = {
             message: "Login Successful",
@@ -42,12 +44,28 @@ const login = async ({ data }) => {
             token
         };
     } catch (error) {
-        response.error = error.message;
+        response.error = { statusCode: 500, message: error.message};
+    } finally {
+        return response;
+    }
+}
+
+const logout = async () => {
+    let response = {
+        result: null,
+        error: null
+    }
+    try {
+        await Pg.query(qs.logoutOtherSessions); 
+        response.result = "Logout Successfully."
+    } catch (error) {
+        response.error = { statusCode: 500, message: error.message};
     } finally {
         return response;
     }
 }
 
 module.exports = {
-    login
+    login,
+    logout
 }
