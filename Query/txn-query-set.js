@@ -8,7 +8,7 @@ const txn_query_set = {
     checkOut: "UPDATE transactions SET dt_check_out = NOW() WHERE transaction_no = $1",
     timeOut: "UPDATE transactions SET dt_check_out = NOW() WHERE transaction_no = $1",
     getTxnByTxnNo: "SELECT * FROM transactions WHERE transaction_no = $1;",
-    updateTransaction: "UPDATE transactions SET duration = duration + $1, additional_time = additional_time + $1, bill = $2 WHERE transaction_no = $3 RETURNING *;",
+    updateTransaction: "UPDATE transactions SET duration = duration + $1, additional_time = additional_time + $1, bill = bill + $2 WHERE transaction_no = $3 RETURNING *;",
     deleteTransaction: "DELETE FROM transactions WHERE transaction_no = $1;",
     getActiveTxns: "SELECT * FROM transactions WHERE transaction_no IN (SELECT transaction_no FROM rooms WHERE status = 2)  ORDER BY room_no",
     updateTransactionRoom: "UPDATE transactions SET room_no = $1 WHERE transaction_no = $2;",
