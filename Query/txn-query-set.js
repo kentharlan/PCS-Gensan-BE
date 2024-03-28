@@ -37,8 +37,8 @@ const txn_query_set = {
             (COALESCE($1, '') = '' OR user_id = $1::integer) AND
             (COALESCE($2, '') = '' OR login_dt >= $2::date) AND
             (COALESCE($3, '') = '' OR login_dt <= ($3::date + INTERVAL '1 day'))
-        GROUP BY s.session_id, u.first_name
-        ORDER BY MAX(p.dt_created) DESC NULLS LAST;
+        GROUP BY s.session_id, first_name
+        ORDER BY s.session_id DESC;
     `,
     deletePaymentByTxnNo: "DELETE FROM payments WHERE transaction_no = $1;"
 }
