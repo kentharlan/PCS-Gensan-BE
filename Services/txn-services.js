@@ -15,7 +15,7 @@ const getTxn = async ({txn_no}) => {
         const payments = await Pg.query(qs.getPaymentsByTxnNo, [txn_no])
 
         const transaction = txn[0]
-        const total_payment = payments.reduce((acc, payment) => acc + payment.amount, 0);
+        const total_payment = payments.reduce((acc, payment) => acc + parseInt(payment.amount, 10), 0);
 
         transaction.bill = transaction.bill - total_payment
 
@@ -289,29 +289,43 @@ const history = async ({ filters }) => {
 
         let totalAmount = 0;
         let totalRooms = 0;
+        let records = []
 
-        history = history.map(txn => {
-            const formatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: "Asia/Manila" };
-            const formattedCheckIn = new Date(txn.dt_check_in).toLocaleString('en-US', formatOptions);
-            const formattedCheckOut = txn.dt_check_out ? new Date(txn.dt_check_out).toLocaleString('en-US', formatOptions) : null;
+        const formatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: "Asia/Manila" };
 
-            const parsedAmount = parseInt(txn.bill, 10);
-            if (!isNaN(parsedAmount)) {
-                totalAmount += parsedAmount;
-                totalRooms += 1;
-            }
-
-            return {
-                ...txn,
-                dt_check_in: formattedCheckIn,
-                dt_check_out: formattedCheckOut
+        for (const row of history) {
+            const payment = {
+                cashier: row.cashier,
+                amount: row.amount,
+                payment_dt: new Date(row.dt_created).toLocaleString('en-US', formatOptions),
             };
-        });
+
+            const existingTxn = records.find(r => r.transaction_no === row.transaction_no);
+            if (existingTxn) {
+                existingTxn.payments.push(payment);
+            } else {
+                const parsedAmount = parseInt(row.bill, 10);
+                if (!isNaN(parsedAmount)) {
+                    totalAmount += parsedAmount;
+                    totalRooms += 1;
+                }
+                records.push({
+                    transaction_no: row.transaction_no,
+                    room_no: row.room_no,
+                    duration: row.duration,
+                    bill: row.bill,
+                    dt_check_in: new Date(row.dt_check_in).toLocaleString('en-US', formatOptions),
+                    dt_check_out: row.dt_check_out ? new Date(row.dt_check_out).toLocaleString('en-US', formatOptions) : null,
+                    remarks: row.remarks,
+                    payments: [payment]
+                });
+            }
+        }
 
         response.result = {
             totalAmount,
             totalRooms,
-            records: history
+            records
         }
     } catch (error) {
         response.error = error.message;
@@ -320,7 +334,7 @@ const history = async ({ filters }) => {
     }
 }
 
-const payments = async ({ filters }) => {
+const sessions = async ({ filters }) => {
     let response = {
         result: null,
         error: null
@@ -332,35 +346,16 @@ const payments = async ({ filters }) => {
             end_date
         } = filters
 
-        const payments = await Pg.query(qs.getPayments, [user_id, start_date, end_date]);
-        const records = []
-        let totalAmount = 0;
+        const sessions = await Pg.query(qs.getSessions, [user_id, start_date, end_date]);
 
-        for (const payment of payments) {
-            const parsedAmount = parseInt(payment.amount, 10);
-            if (isNaN(parsedAmount) || parsedAmount <= 0) {
-                continue
-            }
-
-            totalAmount += parsedAmount;
-
-            const formatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: "Asia/Manila" };
-            const formattedDate = new Date(payment.dt_created).toLocaleString('en-US', formatOptions);
-            payment.dt_created = formattedDate;
-
-            const formatLogOptions = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: "Asia/Manila" };
-            const formattedLogDate = new Date(payment.dt_created).toLocaleString('en-US', formatLogOptions);
-            payment.login_dt = formattedLogDate;
-
-            const cashier = await Pg.query(qs.getUserById, [payment.user_id])
-            payment.cashier = cashier[0]?.first_name
-
-            records.push(payment)
+        const formatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: "Asia/Manila" };
+        for (const session of sessions) {
+            session.login_dt = new Date(session.login_dt).toLocaleString('en-US', formatOptions)
+            session.logout_dt = session.logout_dt ? new Date(session.logout_dt).toLocaleString('en-US', formatOptions) : null;
         }
 
         response.result = {
-            totalAmount,
-            records
+            records: sessions
         };
     } catch (error) {
         response.error = error.message;
@@ -396,5 +391,5 @@ module.exports = {
     history,
     init,
     pay,
-    payments
+    sessions
 }

@@ -13,34 +13,32 @@ const txn_query_set = {
     getActiveTxns: "SELECT * FROM transactions WHERE transaction_no IN (SELECT transaction_no FROM rooms WHERE status = 2)  ORDER BY room_no",
     updateTransactionRoom: "UPDATE transactions SET room_no = $1 WHERE transaction_no = $2;",
     getHistory: `
-        SELECT 
-            transaction_no, room_no, dt_check_in, dt_check_out, duration, bill, remarks 
-        FROM
-            transactions 
+        SELECT t.*, u.first_name AS cashier, p.amount, p.dt_created
+        FROM transactions t
+        LEFT JOIN payments p ON t.transaction_no = p.transaction_no
+        LEFT JOIN sessions s ON p.session_id = s.session_id
+        LEFT JOIN users u ON s.user_id = u.id
         WHERE
-            (NULLIF($1, '') IS NULL OR transaction_no ILIKE '%' || $1::text || '%') AND
-            (NULLIF($2, '') IS NULL OR dt_check_in >= $2::date) AND
-            (NULLIF($3, '') IS NULL OR dt_check_in <= ($3::date + INTERVAL '1 day'))
-        ORDER BY 
-            transaction_no DESC;
+            (COALESCE($1, '') = '' OR t.transaction_no ILIKE '%' || $1::text || '%') AND
+            (COALESCE($2, '') = '' OR t.dt_check_in >= $2::date) AND
+            (COALESCE($3, '') = '' OR t.dt_check_in <= ($3::date + INTERVAL '1 day'))
+        ORDER BY t.transaction_no DESC;
     `,
     cancelTxn: "UPDATE transactions SET dt_check_out = now(), bill = null, remarks = $1 WHERE transaction_no = $2;",
     insertPayment: "INSERT INTO payments (transaction_no, session_id, amount) VALUES ($1, $2, $3) RETURNING *;",
     getPaymentsByTxnNo: "SELECT * FROM payments WHERE transaction_no = $1",
     getActiveSession: "SELECT * FROM sessions WHERE logout_dt IS NULL AND user_id = $1;",
-    getPayments: `
-        SELECT 
-            p.*, s.*
-        FROM
-            payments p
-        LEFT JOIN
-            sessions s ON p.session_id = s.session_id
+    getSessions: `
+        SELECT s.*, u.first_name AS cashier, COALESCE(SUM(p.amount), 0) AS total_amount
+        FROM sessions s
+        LEFT JOIN payments p ON s.session_id = p.session_id
+        LEFT JOIN users u ON s.user_id = u.id
         WHERE
-            (NULLIF($1, '') IS NULL OR s.user_id = $1::integer) AND
-            (NULLIF($2, '') IS NULL OR s.login_dt >= $2::date) AND
-            (NULLIF($3, '') IS NULL OR s.login_dt <= ($3::date + INTERVAL '1 day'))
-        ORDER BY 
-            p.dt_created DESC;
+            (COALESCE($1, '') = '' OR user_id = $1::integer) AND
+            (COALESCE($2, '') = '' OR login_dt >= $2::date) AND
+            (COALESCE($3, '') = '' OR login_dt <= ($3::date + INTERVAL '1 day'))
+        GROUP BY s.session_id, u.first_name
+        ORDER BY MAX(p.dt_created) DESC NULLS LAST;
     `,
     deletePaymentByTxnNo: "DELETE FROM payments WHERE transaction_no = $1;"
 }

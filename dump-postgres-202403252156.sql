@@ -5,7 +5,7 @@
 -- Dumped from database version 16.2 (Debian 16.2-1.pgdg120+2)
 -- Dumped by pg_dump version 16.1
 
--- Started on 2024-03-23 23:18:03 PST
+-- Started on 2024-03-25 21:56:06 PST
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -49,7 +49,7 @@ SET default_table_access_method = heap;
 CREATE TABLE public.payments (
     payment_id integer NOT NULL,
     transaction_no character varying,
-    amount integer,
+    amount bigint,
     dt_created timestamp without time zone DEFAULT now(),
     session_id integer,
     remarks text
@@ -204,7 +204,7 @@ CREATE TABLE public.transactions (
     room_no smallint NOT NULL,
     dt_check_in timestamp with time zone DEFAULT now(),
     dt_check_out timestamp with time zone,
-    bill smallint,
+    bill bigint,
     duration smallint,
     base_time smallint,
     additional_time smallint,
@@ -314,7 +314,6 @@ COPY public.rooms (room_no, type, transaction_no, status) FROM stdin;
 259	no_garage	\N	1
 260	no_garage	\N	1
 267	no_garage	\N	1
-132	no_garage	\N	1
 133	no_garage	\N	1
 142	no_garage	\N	1
 138	no_garage	\N	1
@@ -364,8 +363,9 @@ COPY public.rooms (room_no, type, transaction_no, status) FROM stdin;
 114	garage	\N	1
 125	garage	\N	1
 126	garage	\N	1
-127	garage	\N	1
 265	no_garage	\N	1
+127	garage	\N	1
+132	no_garage	\N	1
 101	garage	\N	1
 102	garage	\N	1
 103	garage	\N	1
@@ -382,8 +382,6 @@ COPY public.rooms (room_no, type, transaction_no, status) FROM stdin;
 --
 
 COPY public.sessions (session_id, user_id, login_dt, logout_dt) FROM stdin;
-1	1	2024-03-23 23:17:26.182628+08	2024-03-23 23:17:29.190718+08
-2	2	2024-03-23 23:17:31.847403+08	\N
 \.
 
 
@@ -405,7 +403,6 @@ COPY public.transactions (transaction_no, room_no, dt_check_in, dt_check_out, bi
 
 COPY public.users (id, first_name, last_name, username, password, admin, dt_created, dt_updated) FROM stdin;
 1	admin	admin	admin	1234	t	2024-03-09 06:42:33.208784	2024-03-09 06:42:33.208784
-2	user	user	user	1234	f	2024-03-11 19:43:40.874988	2024-03-11 19:43:40.874988
 \.
 
 
@@ -433,7 +430,7 @@ SELECT pg_catalog.setval('public.rates_rate_id_seq', 4, false);
 -- Name: sessions_session_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.sessions_session_id_seq', 2, true);
+SELECT pg_catalog.setval('public.sessions_session_id_seq', 1, false);
 
 
 --
@@ -451,7 +448,7 @@ SELECT pg_catalog.setval('public.transaction_ref_no_seq', 1, false);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 3, true);
+SELECT pg_catalog.setval('public.users_id_seq', 2, false);
 
 
 --
@@ -544,7 +541,7 @@ ALTER TABLE ONLY public.sessions
     ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
--- Completed on 2024-03-23 23:18:03 PST
+-- Completed on 2024-03-25 21:56:07 PST
 
 --
 -- PostgreSQL database dump complete

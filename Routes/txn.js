@@ -1,7 +1,7 @@
 const express = require('express');
 const txn_router = express.Router();
 
-const { getTxn, checkIn, checkOut, update, cancel, transfer, active, history, init, pay, payments } = require('../Services/txn-services')
+const { getTxn, checkIn, checkOut, update, cancel, transfer, active, history, init, pay, sessions } = require('../Services/txn-services')
 
 // "txn"
 txn_router.get('/:txn_no', async (req, res) => {
@@ -91,9 +91,9 @@ txn_router.post('/init', async (req, res) => {
     else res.json(result)
 })
 
-// "txn/payments"
-txn_router.post('/payments', async (req, res) => {
-    const { result, error } = await payments({
+// "txn/sessions"
+txn_router.post('/sessions', async (req, res) => {
+    const { result, error } = await sessions({
         filters: req.query
     });
     if (error) res.send(error)
