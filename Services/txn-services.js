@@ -294,11 +294,14 @@ const history = async ({ filters }) => {
         const formatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: "Asia/Manila" };
 
         for (const row of history) {
-            const payment = {
-                cashier: row.cashier,
-                amount: row.amount,
-                payment_dt: new Date(row.dt_created).toLocaleString('en-US', formatOptions),
-            };
+            let payment = {}
+            if (row.amount) {
+                payment = {
+                    cashier: row.cashier,
+                    amount: row.amount,
+                    payment_dt: new Date(row.dt_created).toLocaleString('en-US', formatOptions),
+                };
+            }
 
             const existingTxn = records.find(r => r.transaction_no === row.transaction_no);
             if (existingTxn) {
