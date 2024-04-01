@@ -5,7 +5,7 @@
 -- Dumped from database version 16.2 (Debian 16.2-1.pgdg120+2)
 -- Dumped by pg_dump version 16.1
 
--- Started on 2024-03-25 21:56:06 PST
+-- Started on 2024-04-01 14:12:15 PST
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -29,7 +29,7 @@ CREATE SCHEMA public;
 ALTER SCHEMA public OWNER TO pg_database_owner;
 
 --
--- TOC entry 3416 (class 0 OID 0)
+-- TOC entry 3418 (class 0 OID 0)
 -- Dependencies: 4
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
@@ -75,7 +75,7 @@ CREATE SEQUENCE public.payments_payment_id_seq
 ALTER SEQUENCE public.payments_payment_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3417 (class 0 OID 0)
+-- TOC entry 3419 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: payments_payment_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -94,7 +94,8 @@ CREATE TABLE public.rates (
     garage text NOT NULL,
     no_garage text NOT NULL,
     dt_created timestamp without time zone DEFAULT now(),
-    dt_updated timestamp without time zone DEFAULT now()
+    dt_updated timestamp without time zone DEFAULT now(),
+    deleted boolean DEFAULT false
 );
 
 
@@ -116,7 +117,7 @@ CREATE SEQUENCE public.rates_rate_id_seq
 ALTER SEQUENCE public.rates_rate_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3418 (class 0 OID 0)
+-- TOC entry 3420 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: rates_rate_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -171,7 +172,7 @@ CREATE SEQUENCE public.sessions_session_id_seq
 ALTER SEQUENCE public.sessions_session_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3419 (class 0 OID 0)
+-- TOC entry 3421 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: sessions_session_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -244,14 +245,15 @@ CREATE TABLE public.users (
     password character varying(100) NOT NULL,
     admin boolean DEFAULT false,
     dt_created timestamp without time zone DEFAULT now(),
-    dt_updated timestamp without time zone DEFAULT now()
+    dt_updated timestamp without time zone DEFAULT now(),
+    deleted boolean DEFAULT false
 );
 
 
 ALTER TABLE public.users OWNER TO postgres;
 
 --
--- TOC entry 3236 (class 2604 OID 16451)
+-- TOC entry 3238 (class 2604 OID 16451)
 -- Name: payments payment_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -267,7 +269,7 @@ ALTER TABLE ONLY public.rates ALTER COLUMN rate_id SET DEFAULT nextval('public.r
 
 
 --
--- TOC entry 3238 (class 2604 OID 16484)
+-- TOC entry 3240 (class 2604 OID 16484)
 -- Name: sessions session_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -275,7 +277,7 @@ ALTER TABLE ONLY public.sessions ALTER COLUMN session_id SET DEFAULT nextval('pu
 
 
 --
--- TOC entry 3408 (class 0 OID 16448)
+-- TOC entry 3410 (class 0 OID 16448)
 -- Dependencies: 223
 -- Data for Name: payments; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -285,20 +287,20 @@ COPY public.payments (payment_id, transaction_no, amount, dt_created, session_id
 
 
 --
--- TOC entry 3400 (class 0 OID 16388)
+-- TOC entry 3402 (class 0 OID 16388)
 -- Dependencies: 215
 -- Data for Name: rates; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.rates (rate_id, name, garage, no_garage, dt_created, dt_updated) FROM stdin;
-1	Default	{"hourly":"100","three":"300","six":"500","twelve":"900","twenty_four":"1200"}	{"hourly":"100","three":"250","six":"450","twelve":"700","twenty_four":"1000"}	2023-04-10 19:08:41.292715	2023-06-19 23:23:57.823366
-3	Senior Discount	{"three":"240","six":"400","twelve":"640","twenty_four":"960","hourly":"80"}	{"three":"200","six":"360","twelve":"560","twenty_four":"800","hourly":"80"}	2023-04-12 18:46:07.957377	2023-04-12 18:46:07.957377
-2	KCC Discount	{"hourly":"90","three":"270","six":"450","twelve":"720","twenty_four":"1080"}	{"hourly":"90","three":"180","six":"405","twelve":"540","twenty_four":"810"}	2023-04-12 18:36:32.546515	2023-07-24 23:17:51.218751
+COPY public.rates (rate_id, name, garage, no_garage, dt_created, dt_updated, deleted) FROM stdin;
+1	Default	{"hourly":"100","three":"300","six":"500","twelve":"900","twenty_four":"1200"}	{"hourly":"100","three":"250","six":"450","twelve":"700","twenty_four":"1000"}	2023-04-10 19:08:41.292715	2023-06-19 23:23:57.823366	f
+3	Senior Discount	{"three":"240","six":"400","twelve":"640","twenty_four":"960","hourly":"80"}	{"three":"200","six":"360","twelve":"560","twenty_four":"800","hourly":"80"}	2023-04-12 18:46:07.957377	2023-04-12 18:46:07.957377	f
+2	KCC Discount	{"hourly":"90","three":"270","six":"450","twelve":"720","twenty_four":"1080"}	{"hourly":"90","three":"180","six":"405","twelve":"540","twenty_four":"810"}	2023-04-12 18:36:32.546515	2023-07-24 23:17:51.218751	f
 \.
 
 
 --
--- TOC entry 3402 (class 0 OID 16396)
+-- TOC entry 3404 (class 0 OID 16396)
 -- Dependencies: 217
 -- Data for Name: rooms; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -349,34 +351,34 @@ COPY public.rooms (room_no, type, transaction_no, status) FROM stdin;
 140	no_garage	\N	1
 124	garage	\N	1
 120	garage	\N	1
-111	garage	\N	1
-113	garage	\N	1
-107	garage	\N	1
-108	garage	\N	1
 119	garage	\N	1
 121	garage	\N	1
 122	garage	\N	1
 123	garage	\N	1
-109	garage	\N	1
-110	garage	\N	1
-112	garage	\N	1
-114	garage	\N	1
 125	garage	\N	1
 126	garage	\N	1
 265	no_garage	\N	1
 127	garage	\N	1
 132	no_garage	\N	1
-101	garage	\N	1
-102	garage	\N	1
-103	garage	\N	1
-104	garage	\N	1
 106	garage	\N	1
 105	garage	\N	1
+107	garage	\N	1
+114	garage	\N	1
+113	garage	\N	1
+112	garage	\N	1
+111	garage	\N	1
+110	garage	\N	1
+109	garage	\N	1
+108	garage	\N	1
+104	garage	\N	1
+103	garage	\N	1
+102	garage	\N	1
+101	garage	\N	1
 \.
 
 
 --
--- TOC entry 3410 (class 0 OID 16481)
+-- TOC entry 3412 (class 0 OID 16481)
 -- Dependencies: 225
 -- Data for Name: sessions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -386,7 +388,7 @@ COPY public.sessions (session_id, user_id, login_dt, logout_dt) FROM stdin;
 
 
 --
--- TOC entry 3404 (class 0 OID 16400)
+-- TOC entry 3406 (class 0 OID 16400)
 -- Dependencies: 219
 -- Data for Name: transactions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -396,18 +398,18 @@ COPY public.transactions (transaction_no, room_no, dt_check_in, dt_check_out, bi
 
 
 --
--- TOC entry 3406 (class 0 OID 16408)
+-- TOC entry 3408 (class 0 OID 16408)
 -- Dependencies: 221
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (id, first_name, last_name, username, password, admin, dt_created, dt_updated) FROM stdin;
-1	admin	admin	admin	1234	t	2024-03-09 06:42:33.208784	2024-03-09 06:42:33.208784
+COPY public.users (id, first_name, last_name, username, password, admin, dt_created, dt_updated, deleted) FROM stdin;
+1	admin	admin	admin	1234	t	2024-03-09 06:42:33.208784	2024-03-09 06:42:33.208784	f
 \.
 
 
 --
--- TOC entry 3420 (class 0 OID 0)
+-- TOC entry 3422 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: payments_payment_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -416,7 +418,7 @@ SELECT pg_catalog.setval('public.payments_payment_id_seq', 1, false);
 
 
 --
--- TOC entry 3421 (class 0 OID 0)
+-- TOC entry 3423 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: rates_rate_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -425,7 +427,7 @@ SELECT pg_catalog.setval('public.rates_rate_id_seq', 4, false);
 
 
 --
--- TOC entry 3422 (class 0 OID 0)
+-- TOC entry 3424 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: sessions_session_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -434,7 +436,7 @@ SELECT pg_catalog.setval('public.sessions_session_id_seq', 1, false);
 
 
 --
--- TOC entry 3423 (class 0 OID 0)
+-- TOC entry 3425 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: transaction_ref_no_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -443,7 +445,7 @@ SELECT pg_catalog.setval('public.transaction_ref_no_seq', 1, false);
 
 
 --
--- TOC entry 3424 (class 0 OID 0)
+-- TOC entry 3426 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -452,7 +454,7 @@ SELECT pg_catalog.setval('public.users_id_seq', 2, false);
 
 
 --
--- TOC entry 3251 (class 2606 OID 16456)
+-- TOC entry 3253 (class 2606 OID 16456)
 -- Name: payments payments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -461,7 +463,7 @@ ALTER TABLE ONLY public.payments
 
 
 --
--- TOC entry 3241 (class 2606 OID 16417)
+-- TOC entry 3243 (class 2606 OID 16417)
 -- Name: rates rates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -470,7 +472,7 @@ ALTER TABLE ONLY public.rates
 
 
 --
--- TOC entry 3243 (class 2606 OID 16419)
+-- TOC entry 3245 (class 2606 OID 16419)
 -- Name: rooms rooms_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -479,7 +481,7 @@ ALTER TABLE ONLY public.rooms
 
 
 --
--- TOC entry 3253 (class 2606 OID 16487)
+-- TOC entry 3255 (class 2606 OID 16487)
 -- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -488,7 +490,7 @@ ALTER TABLE ONLY public.sessions
 
 
 --
--- TOC entry 3245 (class 2606 OID 16421)
+-- TOC entry 3247 (class 2606 OID 16421)
 -- Name: transactions transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -497,7 +499,7 @@ ALTER TABLE ONLY public.transactions
 
 
 --
--- TOC entry 3247 (class 2606 OID 16423)
+-- TOC entry 3249 (class 2606 OID 16423)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -506,7 +508,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3249 (class 2606 OID 16425)
+-- TOC entry 3251 (class 2606 OID 16425)
 -- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -515,7 +517,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3254 (class 2606 OID 16494)
+-- TOC entry 3256 (class 2606 OID 16494)
 -- Name: payments payments_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -524,7 +526,7 @@ ALTER TABLE ONLY public.payments
 
 
 --
--- TOC entry 3255 (class 2606 OID 16457)
+-- TOC entry 3257 (class 2606 OID 16457)
 -- Name: payments payments_transaction_no_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -533,7 +535,7 @@ ALTER TABLE ONLY public.payments
 
 
 --
--- TOC entry 3256 (class 2606 OID 16488)
+-- TOC entry 3258 (class 2606 OID 16488)
 -- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -541,7 +543,7 @@ ALTER TABLE ONLY public.sessions
     ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
--- Completed on 2024-03-25 21:56:07 PST
+-- Completed on 2024-04-01 14:12:15 PST
 
 --
 -- PostgreSQL database dump complete

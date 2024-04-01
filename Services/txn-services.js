@@ -163,12 +163,16 @@ const update = async ({ data }) => {
     };
     try {
         const {
+            room_no,
             transaction_no,
+            timed_out,
             additional_time,
-            new_bill
+            additional_bill
         } = data;
 
-        const updateResult = await Pg.query(qs.updateTransaction, [additional_time, new_bill, transaction_no]);
+        if (timed_out) await Pg.query(qs.updateRoom, [2, transaction_no, room_no])
+
+        const updateResult = await Pg.query(qs.updateTransaction, [additional_time, additional_bill, transaction_no]);
         const result = updateResult[0];
 
         // setTimeout
