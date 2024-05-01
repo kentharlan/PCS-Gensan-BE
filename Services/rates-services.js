@@ -1,4 +1,3 @@
-const { parse } = require('dotenv');
 const { Pg } = require('../Pg/Pg')
 const { rates_query_set: qs } = require('../Query/rates-query-set')
 
@@ -52,13 +51,23 @@ const createRate = async ({data}) => {
         const {
             name,
             garage,
-            no_garage
+            no_garage,
+            extra_pillow,
+            extra_towel,
+            extra_small_bed,
+            extra_bed,
+            extra_person
         } = data
 
         const rate = await Pg.query(qs.createRate, [
             name,
             garage,
-            no_garage
+            no_garage,
+            extra_pillow,
+            extra_towel,
+            extra_small_bed,
+            extra_bed,
+            extra_person
         ]);
 
         const res = rate[0];
@@ -79,13 +88,23 @@ const updateRate = async ({data, id}) => {
         const {
             name,
             garage,
-            no_garage
+            no_garage,
+            extra_pillow,
+            extra_towel,
+            extra_small_bed,
+            extra_bed,
+            extra_person
         } = data
 
         const rate = await Pg.query(qs.updateRate, [
             name,
             garage,
             no_garage,
+            extra_pillow,
+            extra_towel,
+            extra_small_bed,
+            extra_bed,
+            extra_person,
             id
         ]);
 

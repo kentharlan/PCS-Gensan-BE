@@ -4,12 +4,12 @@ const { check_out } = require('./checkout')
 const { timeouts } = require('../timeouts/timeouts')
 const { updateRoomPower, updateAllRoomPower } = require('./power');
 
-const getTxn = async ({txn_no}) => {
+const getTxn = async ({ txn_no }) => {
     let response = {
         result: null,
         error: null
     };
-    
+
     try {
         const txn = await Pg.query(qs.getTxnByTxnNo, [txn_no])
         const payments = await Pg.query(qs.getPaymentsByTxnNo, [txn_no])
@@ -41,6 +41,11 @@ const checkIn = async ({ data }) => {
             rate_id,
             base_time,
             additional_time,
+            extra_pillow,
+            extra_towel,
+            extra_small_bed,
+            extra_bed,
+            extra_person
         } = data;
 
         const getRoom = await Pg.query(qs.getRoomByRoomNo, [room_no]);
@@ -49,7 +54,6 @@ const checkIn = async ({ data }) => {
         const rates = getRate[0];
         rates.garage = JSON.parse(rates.garage);
         rates.no_garage = JSON.parse(rates.no_garage);
-        
 
         switch (room.type) {
             case "garage":
@@ -74,11 +78,30 @@ const checkIn = async ({ data }) => {
                 break;
         }
 
-        const bill = parseInt(additional_time) * parseInt(rate.hourly) + parseInt(rate[base_time_name]);
+        const bill = (parseInt(additional_time) * parseInt(rate.hourly))
+            + parseInt(rate[base_time_name])
+            + (parseInt(extra_pillow) * parseInt(rates.extra_pillow))
+            + (parseInt(extra_towel) * parseInt(rates.extra_towel))
+            + (parseInt(extra_small_bed) * parseInt(rates.extra_small_bed))
+            + (parseInt(extra_bed) * parseInt(rates.extra_bed))
+            + (parseInt(extra_person) * parseInt(rates.extra_person))
+
         const duration = parseInt(base_time) + parseInt(additional_time);
 
         // insert new transaction
-        const insertTransaction = await Pg.query(qs.insertTransaction, [room_no, bill, duration, base_time, additional_time, rate_id]);
+        const insertTransaction = await Pg.query(qs.insertTransaction, [
+            room_no,
+            bill,
+            duration,
+            base_time,
+            additional_time,
+            rate_id,
+            extra_pillow,
+            extra_towel,
+            extra_small_bed,
+            extra_bed,
+            extra_person
+        ]);
         const transaction = insertTransaction[0];
 
         // update room status
@@ -92,6 +115,7 @@ const checkIn = async ({ data }) => {
 
         response.result = transaction;
     } catch (error) {
+        console.log(error.message)
         response.error = error.message;
     } finally {
         return response;
@@ -137,10 +161,10 @@ const checkOut = async ({ data }) => {
         if (bill && bill > 0) {
             const room = await Pg.query(qs.getRoomByRoomNo, [room_no])
             const transaction_no = room[0].transaction_no
-    
+
             const session = await Pg.query(qs.getActiveSession, [user_id])
             const session_id = session[0].session_id
-    
+
             await Pg.query(qs.insertPayment, [transaction_no, session_id, bill])
         }
 
@@ -163,17 +187,42 @@ const update = async ({ data }) => {
     };
     try {
         const {
-            room_no,
             transaction_no,
             timed_out,
             additional_time,
-            additional_bill
+            extra_pillow,
+            extra_towel,
+            extra_small_bed,
+            extra_bed,
+            extra_person
         } = data;
 
-        if (timed_out) await Pg.query(qs.updateRoom, [2, transaction_no, room_no])
+        const [transaction] = await Pg.query(qs.getTxnByTxnNo, [transaction_no])
+        const [room] = await Pg.query(qs.getRoomByRoomNo, [transaction.room_no])
+        const [rate] = await Pg.query(qs.getRateByRateId, [transaction.rate_id])
+        rate.garage = JSON.parse(rate.garage);
+        rate.no_garage = JSON.parse(rate.no_garage);
 
-        const updateResult = await Pg.query(qs.updateTransaction, [additional_time, additional_bill, transaction_no]);
+        const additional_bill = (additional_time * rate[room.type].hourly)
+            + (extra_pillow * rate.extra_pillow)
+            + (extra_towel * rate.extra_towel)
+            + (extra_small_bed * rate.extra_small_bed)
+            + (extra_bed * rate.extra_bed)
+            + (extra_person * rate.extra_person)
+
+        const updateResult = await Pg.query(qs.updateTransaction, [
+            additional_time,
+            extra_pillow,
+            extra_towel,
+            extra_small_bed,
+            extra_bed,
+            extra_person,
+            additional_bill,
+            transaction_no
+        ]);
         const result = updateResult[0];
+
+        if (timed_out) await Pg.query(qs.updateRoom, [2, result.transaction_no, result.room_no])
 
         // setTimeout
         await timeouts.cancelTimeout(result.room_no);
@@ -298,7 +347,7 @@ const history = async ({ filters }) => {
         const formatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: "Asia/Manila" };
 
         for (const row of history) {
-            let payment = {}
+            let payment
             if (row.amount) {
                 payment = {
                     cashier: row.cashier,
@@ -309,22 +358,67 @@ const history = async ({ filters }) => {
 
             const existingTxn = records.find(r => r.transaction_no === row.transaction_no);
             if (existingTxn) {
-                existingTxn.payments.push(payment);
+                if (payment) {
+                    existingTxn.payments.push(payment);
+                }
             } else {
                 const parsedAmount = parseInt(row.bill, 10);
                 if (!isNaN(parsedAmount)) {
                     totalAmount += parsedAmount;
                     totalRooms += 1;
                 }
+
+                const [room] = await Pg.query(qs.getRoomByRoomNo, [row.room_no]);
+                const [rate] = await Pg.query(qs.getRateByRateId, [row.rate_id]);
+
+                let room_rate
+                switch (room.type) {
+                    case "garage":
+                        room_rate = JSON.parse(rate.garage);
+                        break;
+                    case "no_garage":
+                        room_rate = JSON.parse(rate.no_garage)
+                }
+
+                switch (row.duration) {
+                    case 3:
+                        base_time_name = "three";
+                        break;
+                    case 6:
+                        base_time_name = "six";
+                        break;
+                    case 12:
+                        base_time_name = "twelve";
+                        break;
+                    case 24:
+                        base_time_name = "twenty_four";
+                        break;
+                }
+
                 records.push({
                     transaction_no: row.transaction_no,
                     room_no: row.room_no,
                     duration: row.duration,
+                    rate: rate.name,
                     bill: row.bill,
+                    base_time: row.base_time,
+                    base_time_amount: parseInt(room_rate[base_time_name]),
+                    additional_time: row.additional_time,
+                    additional_time_amount: parseInt(row.additional_time) * parseInt(room_rate.hourly),
+                    extra_pillow: row.extra_pillow,
+                    extra_pillow_amount: parseInt(row.extra_pillow) * parseInt(rate.extra_pillow),
+                    extra_towel: row.extra_towel,
+                    extra_towel_amount: parseInt(row.extra_towel) * parseInt(rate.extra_towel),
+                    extra_small_bed: row.extra_small_bed,
+                    extra_small_bed_amount: parseInt(row.extra_small_bed) * parseInt(rate.extra_small_bed),
+                    extra_bed: row.extra_bed,
+                    extra_bed_amount: parseInt(row.extra_bed) * parseInt(rate.extra_bed),
+                    extra_person: row.extra_person,
+                    extra_person_amount: parseInt(row.extra_person) * parseInt(rate.extra_person),
                     dt_check_in: new Date(row.dt_check_in).toLocaleString('en-US', formatOptions),
                     dt_check_out: row.dt_check_out ? new Date(row.dt_check_out).toLocaleString('en-US', formatOptions) : null,
                     remarks: row.remarks,
-                    payments: [payment]
+                    payments: payment ? [payment] : []
                 });
             }
         }

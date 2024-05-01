@@ -2,13 +2,44 @@ const txn_query_set = {
     getRoomByRoomNo: "SELECT * FROM rooms WHERE room_no = $1",
     getRateByRateId: "SELECT * FROM rates WHERE rate_id = $1",
     getUserById: "SELECT * FROM users WHERE id = $1",
-    insertTransaction: "INSERT INTO transactions (room_no, bill, duration, base_time, additional_time, rate_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+    insertTransaction: `
+        INSERT INTO
+            transactions (
+                room_no,
+                bill,
+                duration,
+                base_time,
+                additional_time,
+                rate_id,
+                extra_pillow,
+                extra_towel,
+                extra_small_bed,
+                extra_bed,
+                extra_person
+            ) 
+        VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+        RETURNING *`,
     updateRoom: "UPDATE rooms SET status = $1, transaction_no = $2 WHERE room_no = $3",
     timedOutRoom: "UPDATE rooms SET status = $1 WHERE room_no = $2",
     checkOut: "UPDATE transactions SET dt_check_out = NOW() WHERE transaction_no = $1",
     timeOut: "UPDATE transactions SET dt_check_out = NOW() WHERE transaction_no = $1",
     getTxnByTxnNo: "SELECT * FROM transactions WHERE transaction_no = $1;",
-    updateTransaction: "UPDATE transactions SET duration = duration + $1, additional_time = additional_time + $1, bill = bill + $2 WHERE transaction_no = $3 RETURNING *;",
+    updateTransaction: `
+        UPDATE 
+            transactions 
+        SET 
+            duration = duration + $1,
+            additional_time = additional_time + $1,
+            extra_pillow = extra_pillow + $2,
+            extra_towel = extra_towel + $3,
+            extra_small_bed = extra_small_bed +$4,
+            extra_bed = extra_bed + $5,
+            extra_person = extra_person +$6,
+            bill = bill + $7
+        WHERE 
+            transaction_no = $8
+        RETURNING *;`,
     deleteTransaction: "DELETE FROM transactions WHERE transaction_no = $1;",
     getActiveTxns: "SELECT * FROM transactions WHERE transaction_no IN (SELECT transaction_no FROM rooms WHERE status = 2)  ORDER BY room_no",
     updateTransactionRoom: "UPDATE transactions SET room_no = $1 WHERE transaction_no = $2;",
