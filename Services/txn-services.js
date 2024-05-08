@@ -379,7 +379,7 @@ const history = async ({ filters }) => {
                     case "no_garage":
                         room_rate = JSON.parse(rate.no_garage)
                 }
-
+                let base_time_name
                 switch (row.duration) {
                     case 3:
                         base_time_name = "three";
