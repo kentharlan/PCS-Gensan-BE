@@ -11,14 +11,15 @@ const txn_query_set = {
                 base_time,
                 additional_time,
                 rate_id,
-                extra_pillow,
                 extra_towel,
-                extra_small_bed,
-                extra_bed,
+                extra_pillow,
+                extra_blanket,
+                extra_single_bed,
+                extra_double_bed,
                 extra_person
             ) 
         VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
         RETURNING *`,
     updateRoom: "UPDATE rooms SET status = $1, transaction_no = $2 WHERE room_no = $3",
     timedOutRoom: "UPDATE rooms SET status = $1 WHERE room_no = $2",
@@ -31,14 +32,15 @@ const txn_query_set = {
         SET 
             duration = duration + $1,
             additional_time = additional_time + $1,
-            extra_pillow = extra_pillow + $2,
-            extra_towel = extra_towel + $3,
-            extra_small_bed = extra_small_bed +$4,
-            extra_bed = extra_bed + $5,
-            extra_person = extra_person +$6,
-            bill = bill + $7
+            extra_towel = extra_towel + $2,
+            extra_pillow = extra_pillow + $3,
+            extra_blanket = extra_blanket + $4,
+            extra_single_bed = extra_single_bed + $5,
+            extra_double_bed = extra_double_bed + $6,
+            extra_person = extra_person + $7,
+            bill = bill + $8
         WHERE 
-            transaction_no = $8
+            transaction_no = $9
         RETURNING *;`,
     deleteTransaction: "DELETE FROM transactions WHERE transaction_no = $1;",
     getActiveTxns: "SELECT * FROM transactions WHERE transaction_no IN (SELECT transaction_no FROM rooms WHERE status = 2)  ORDER BY room_no",

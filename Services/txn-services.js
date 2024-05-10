@@ -41,10 +41,11 @@ const checkIn = async ({ data }) => {
             rate_id,
             base_time,
             additional_time,
-            extra_pillow,
             extra_towel,
-            extra_small_bed,
-            extra_bed,
+            extra_pillow,
+            extra_blanket,
+            extra_single_bed,
+            extra_double_bed,
             extra_person
         } = data;
 
@@ -80,10 +81,11 @@ const checkIn = async ({ data }) => {
 
         const bill = (parseInt(additional_time) * parseInt(rate.hourly))
             + parseInt(rate[base_time_name])
-            + (parseInt(extra_pillow) * parseInt(rates.extra_pillow))
             + (parseInt(extra_towel) * parseInt(rates.extra_towel))
-            + (parseInt(extra_small_bed) * parseInt(rates.extra_small_bed))
-            + (parseInt(extra_bed) * parseInt(rates.extra_bed))
+            + (parseInt(extra_pillow) * parseInt(rates.extra_pillow))
+            + (parseInt(extra_blanket) * parseInt(rates.extra_blanket))
+            + (parseInt(extra_single_bed) * parseInt(rates.extra_single_bed))
+            + (parseInt(extra_double_bed) * parseInt(rates.extra_double_bed))
             + (parseInt(extra_person) * parseInt(rates.extra_person))
 
         const duration = parseInt(base_time) + parseInt(additional_time);
@@ -96,10 +98,11 @@ const checkIn = async ({ data }) => {
             base_time,
             additional_time,
             rate_id,
-            extra_pillow,
             extra_towel,
-            extra_small_bed,
-            extra_bed,
+            extra_pillow,
+            extra_blanket,
+            extra_single_bed,
+            extra_double_bed,
             extra_person
         ]);
         const transaction = insertTransaction[0];
@@ -190,10 +193,11 @@ const update = async ({ data }) => {
             transaction_no,
             timed_out,
             additional_time,
-            extra_pillow,
             extra_towel,
-            extra_small_bed,
-            extra_bed,
+            extra_pillow,
+            extra_blanket,
+            extra_single_bed,
+            extra_double_bed,
             extra_person
         } = data;
 
@@ -204,18 +208,20 @@ const update = async ({ data }) => {
         rate.no_garage = JSON.parse(rate.no_garage);
 
         const additional_bill = (additional_time * rate[room.type].hourly)
-            + (extra_pillow * rate.extra_pillow)
             + (extra_towel * rate.extra_towel)
-            + (extra_small_bed * rate.extra_small_bed)
-            + (extra_bed * rate.extra_bed)
+            + (extra_pillow * rate.extra_pillow)
+            + (extra_blanket * rate.extra_blanket)
+            + (extra_single_bed * rate.extra_single_bed)
+            + (extra_double_bed * rate.extra_double_bed)
             + (extra_person * rate.extra_person)
 
         const updateResult = await Pg.query(qs.updateTransaction, [
             additional_time,
-            extra_pillow,
             extra_towel,
-            extra_small_bed,
-            extra_bed,
+            extra_pillow,
+            extra_blanket,
+            extra_single_bed,
+            extra_double_bed,
             extra_person,
             additional_bill,
             transaction_no
@@ -380,7 +386,7 @@ const history = async ({ filters }) => {
                         room_rate = JSON.parse(rate.no_garage)
                 }
                 let base_time_name
-                switch (row.duration) {
+                switch (row.base_time) {
                     case 3:
                         base_time_name = "three";
                         break;
@@ -400,19 +406,21 @@ const history = async ({ filters }) => {
                     room_no: row.room_no,
                     duration: row.duration,
                     rate: rate.name,
-                    bill: row.bill,
+                    bill: parseInt(row.bill),
                     base_time: row.base_time,
                     base_time_amount: parseInt(room_rate[base_time_name]),
                     additional_time: row.additional_time,
                     additional_time_amount: parseInt(row.additional_time) * parseInt(room_rate.hourly),
-                    extra_pillow: row.extra_pillow,
-                    extra_pillow_amount: parseInt(row.extra_pillow) * parseInt(rate.extra_pillow),
                     extra_towel: row.extra_towel,
                     extra_towel_amount: parseInt(row.extra_towel) * parseInt(rate.extra_towel),
-                    extra_small_bed: row.extra_small_bed,
-                    extra_small_bed_amount: parseInt(row.extra_small_bed) * parseInt(rate.extra_small_bed),
-                    extra_bed: row.extra_bed,
-                    extra_bed_amount: parseInt(row.extra_bed) * parseInt(rate.extra_bed),
+                    extra_pillow: row.extra_pillow,
+                    extra_pillow_amount: parseInt(row.extra_pillow) * parseInt(rate.extra_pillow),
+                    extra_blanket: row.extra_blanket,
+                    extra_blanket_amount: parseInt(row.extra_blanket) * parseInt(rate.extra_blanket),
+                    extra_single_bed: row.extra_single_bed,
+                    extra_single_bed_amount: parseInt(row.extra_single_bed) * parseInt(rate.extra_single_bed),
+                    extra_double_bed: row.extra_double_bed,
+                    extra_double_bed_amount: parseInt(row.extra_double_bed) * parseInt(rate.extra_double_bed),
                     extra_person: row.extra_person,
                     extra_person_amount: parseInt(row.extra_person) * parseInt(rate.extra_person),
                     dt_check_in: new Date(row.dt_check_in).toLocaleString('en-US', formatOptions),

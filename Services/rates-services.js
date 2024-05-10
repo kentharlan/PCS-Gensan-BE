@@ -52,10 +52,11 @@ const createRate = async ({data}) => {
             name,
             garage,
             no_garage,
-            extra_pillow,
             extra_towel,
-            extra_small_bed,
-            extra_bed,
+            extra_pillow,
+            extra_blanket,
+            extra_single_bed,
+            extra_double_bed,
             extra_person
         } = data
 
@@ -63,10 +64,11 @@ const createRate = async ({data}) => {
             name,
             garage,
             no_garage,
-            extra_pillow,
             extra_towel,
-            extra_small_bed,
-            extra_bed,
+            extra_pillow,
+            extra_blanket,
+            extra_single_bed,
+            extra_double_bed,
             extra_person
         ]);
 
@@ -89,10 +91,11 @@ const updateRate = async ({data, id}) => {
             name,
             garage,
             no_garage,
-            extra_pillow,
             extra_towel,
-            extra_small_bed,
-            extra_bed,
+            extra_pillow,
+            extra_blanket,
+            extra_single_bed,
+            extra_double_bed,
             extra_person
         } = data
 
@@ -100,10 +103,11 @@ const updateRate = async ({data, id}) => {
             name,
             garage,
             no_garage,
-            extra_pillow,
             extra_towel,
-            extra_small_bed,
-            extra_bed,
+            extra_pillow,
+            extra_blanket,
+            extra_single_bed,
+            extra_double_bed,
             extra_person,
             id
         ]);
